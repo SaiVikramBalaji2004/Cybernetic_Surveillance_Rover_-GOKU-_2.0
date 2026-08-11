@@ -1,0 +1,12 @@
+groq>=0.4.0
+google-genai>=1.0.0
+opencv-python>=4.8.0
+pygame>=2.5.0
+speechrecognition>=3.10.0
+pyttsx3>=2.90
+requests>=2.31.0
+wikipedia>=1.4.0
+
+# Hardware-specific (Raspberry Pi only)
+# RPi.GPIO - install via: sudo apt-get install python3-rpi.gpio
+# Or for Raspberry Pi OS: pip install RPi.GPIO
