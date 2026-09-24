@@ -1,436 +1,375 @@
-# GOKU — Groq-integrated Operational Kinetic Unit
+<div align="center">
 
-**Cybernetic Surveillance Rover · Home Automation Rover System (HARS)**
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f2027,50:203a43,100:2c5364&height=220&section=header&text=G%20O%20K%20U&fontSize=72&fontColor=00e676&animation=fadeIn&fontAlignY=38&desc=Groq-integrated%20Operational%20Kinetic%20Unit&descAlignY=60&descSize=20" alt="GOKU banner" />
 
-A mobile, AI-powered surveillance rover that unifies **active perimeter security** with **industrial-grade home automation**, all driven by **natural voice interaction**. GOKU moves like a rover, sees through a camera, thinks with on-device orchestration plus cloud LLMs, listens and speaks through voice, navigates autonomously, follows a Bluetooth device, and switches home appliances through an ESP32-powered relay board.
+<a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=22&pause=1200&color=00E676&center=true&vCenter=true&width=760&lines=A+rover+that+listens.;A+brain+that+thinks+in+two+LLMs.;A+body+that+rolls%2C+watches%2C+and+flips+your+light+switches." alt="Typing animation" /></a>
 
-> Built as a final-year Bachelor of Engineering project (ECE) — design, hardware, AI integration, and field testing.
+<br/>
 
----
+[![Raspberry Pi 5](https://img.shields.io/badge/Raspberry%20Pi-5-A22846?style=for-the-badge&logo=raspberrypi&logoColor=white)](https://www.raspberrypi.com/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Groq](https://img.shields.io/badge/Groq-Llama%203.3%2070B-F55036?style=for-the-badge)](https://groq.com)
+[![Gemini](https://img.shields.io/badge/Google-Gemini%20Flash-4285F4?style=for-the-badge&logo=googlegemini&logoColor=white)](https://deepmind.google/technologies/gemini/)
+[![ESP32](https://img.shields.io/badge/ESP32-Relay%20Node-E7352C?style=for-the-badge&logo=espressif&logoColor=white)](https://www.espressif.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-## Table of Contents
+**[Briefing](#-mission-briefing) · [Demo](#-demo) · [Architecture](#-architecture) · [Voice Commands](#-voice-commands) · [Hardware](#-hardware) · [Quick Start](#-quick-start) · [Roadmap](#-roadmap)**
 
-- [Highlights](#highlights)
-- [Architecture](#architecture)
-- [Features](#features)
-- [Methodology](#methodology)
-- [Applications](#applications)
-- [Hardware Requirements](#hardware-requirements)
-- [Software Stack](#software-stack)
-- [Repository Structure](#repository-structure)
-- [Setup & Installation](#setup--installation)
-- [Running GOKU](#running-goku)
-- [ESP32 Firmware](#esp32-firmware)
-- [Voice Commands](#voice-commands)
-- [Keypad Control](#keypad-control)
-- [Configuration](#configuration)
-- [Security Notes](#security-notes)
-- [Limitations & Future Work](#limitations--future-work)
-- [License](#license)
+</div>
 
 ---
 
-## Highlights
+## 🎯 Mission Briefing
 
-- 🤖 Fully **voice-controlled** surveillance & home-automation rover
-- 🧠 **Dual-model AI routing** — Groq (Llama) primary + Google Gemini fallback
-- 👁️ **Vision AI** — object search, counting, people detection, text reading, scene description
-- 📱 **Bluetooth RSSI following** — maintains optimal distance from any paired device
-- 🏠 **ESP32 relay automation** — control lights, fan, pump, AC, and more
-- 🗣️ **Natural-language intent engine** — movement, alarms, timers, weather, music, web search
-- 🎵 **Multilingual music playback** (22 languages) via yt-dlp + VLC
-- 🚨 **Email emergency alerts** over Gmail SMTP
-- 😊 **Animated robot HMI** — 60 FPS Pygame face with real-time expressions
-- 🧭 **Autonomous patrol & perimeter scanning** modes
-- 🔔 **Alarms & timers** with spoken spoken-name recognition and ringtones
+**GOKU** is a voice-controlled rover that patrols, listens, thinks, and talks back. It is built on a **Raspberry Pi 5** with an **ESP32** relay node riding along for home automation.
 
----
+Say what you want in plain English:
 
-## Architecture
+- 🚗 *"Forward five seconds"*: it drives.
+- 📡 *"Follow me"*: it tracks your phone by Bluetooth signal strength and keeps its distance.
+- 👁️ *"What do you see?"*: it grabs a camera frame and asks a vision model.
+- 💡 *"Lights on"*: it tells an ESP32 to click a relay.
+- 🎵 *"Play a song"*: it finds it on YouTube and plays it through VLC.
+- 🧠 *"Who is…?"*: it routes the question to **Groq** or **Gemini**, whichever is up.
+- 📧 *Something's wrong?* It can email you a security alert.
 
-GOKU implements a layered **cyber-physical system** design:
+Meanwhile a 60 FPS pygame robot face blinks, scans, and pulses on its HDMI screen so you always know what it's up to.
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     PERCEPTION LAYER                            │
-│  • 6-sensor IR array (360° obstacle awareness)                  │
-│  • CP PLUS camera + OpenCV (vision/AI)                          │
-│  • Microphone → Google Speech-to-Text (voice input)             │
-└──────────────────────────────┬──────────────────────────────────┘
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     COGNITIVE LAYER (Raspberry Pi 5)            │
-│  rover_controller.py  →  ai_router.py (intent engine)           │
-│       ├── Groq (Llama-3.3-70B)  — reasoning / conversation      │
-│       ├── Gemini 2.x            — vision + real-time web access │
-│       ├── Weather / Web Search / Music / Timers / Alarms        │
-│       └── Keyword+regex intent classifiers → routing            │
-└──────────────────────────────┬──────────────────────────────────┘
-                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   ACTUATION / CONTROL LAYER                     │
-│  • motor_control  → L298N → 12V DC motors (locomotion)          │
-│  • home_automation → ESP32 HTTP → 8-ch relay → contactors       │
-│  • display_controller → Pygame HMI (animated face)              │
-│  • tts_engine → voice feedback       • email_notifier → alerts  │
-└───────────────┬─────────────────────────────────────────────────┘
-                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      IoT LAYER (ESP32)                          │
-│  esp32_8channel.ino / esp32_home_auto/esp32_home_auto.ino      │
-│  WiFi web server, /relay?r=&s= HTTP API, JSON /status           │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**Main loop flow:** boot → TTS `"Goku online"` → loop { update HMI → listen (4 s) → route command → movement / home / scan / follow / AI query → speak result }. A keypad thread (WASD) runs in parallel with voice control.
-
----
-
-## Features
-
-### Core Mobility & Security
-
-| Feature | Description |
-|---|---|
-| **Voice-controlled movement** | `forward`, `backward`, `left`, `right`, `stop`, plus duration parsing — *"forward for 5 seconds"* |
-| **Perimeter scanning** | Motors sweep left/right 3× — *"scanning perimeter… scan complete. All clear."* |
-| **Autonomous navigation** | Voice toggle `autonomous mode` / `manual mode`; 30 s patrol in background thread |
-| **Obstacle-avoidance framework** | `Trajectory` waypoints + rerouting state machine (`clear / obstacle / rerouting / destination / blocked`) built atop the 6-sensor IR array |
-| **WASD keypad control** | Raw-terminal keypad thread running alongside voice |
-| **Bluetooth RSSI following** | Three-zone proportional distance control (stop / optimal-idle / follow / fast-follow) with lost-target search behaviour |
-
-### AI & Intelligence
-
-| Feature | Description |
-|---|---|
-| **Dual-model AI routing** | Groq Llama primary; automatic Gemini fallback; configurable `fallback_enabled` |
-| **Intent detection** | 40+ keyword/regex classifiers: time, alarm, timer, movement, home, follow, weather, music, search, vision, navigation, general chat |
-| **Vision AI** | Gemini Vision on live camera frames — search/find objects, counting, colours/shapes, people detection, read text, room/location ID, finger counting, scene description |
-| **Scene context** | Current camera view fed into general text queries so replies are grounded in the room |
-| **Time / date / greetings** | Time of day, date, and context-aware greetings |
-| **Live web search** | Brave Suggest → DuckDuckGo Lite → DuckDuckGo HTML → Wikipedia REST fallback chain, grounded answers via LLM |
-| **Weather** | wttr.in API, city extraction, conversational LLM-wrapped forecast |
-| **Conversational persona** | Constrained "GOKU" system prompt: direct, 1–3 sentence answers |
-
-### Smart Home / IoT
-
-| Feature | Description |
-|---|---|
-| **ESP32 relay control** | 5 devices: Light 1, Fan, Pump Motor, AC, Light 2; discovery via ARP/MAC lookup → ping → HTTP test → fallback IP range |
-| **8-channel firmware** | `esp32_8channel.ino` — relays D13/D12/D14/D27/D26/D25/D33/D32, HTML control panel at `/` |
-| **5-channel firmware** | `esp32_home_auto/esp32_home_auto.ino` — `/relay`, `/allon`, `/alloff`, `/status` JSON, LED status blink |
-| **Blynk mapping (config)** | Optional virtual-pin map V0–V7 for cloud dashboard control |
-
-### Media & Productivity
-
-| Feature | Description |
-|---|---|
-| **Music playback** | yt-dlp YouTube search + VLC RC socket; pause/resume/stop; 22-language song search |
-| **Alarms** | Set at HH:MM, list, delete by name; fires ringtone + TTS; once per day |
-| **Timers** | Set/list/stop/pause/resume; parses spoken durations — *"five minutes", "half hour", "a moment"* |
-| **Ringtones** | Programmatically generated WAV alarms/notifications |
-| **Email alerts** | Gmail SMTP `GOKU SECURITY ALERT` emergency messages |
-
-### HMI & Speech I/O
-
-| Feature | Description |
-|---|---|
-| **Animated robot HMI** | Pygame 800×480 @ 60 FPS — glowing LED eyes, blinking shutters, mouth expressions (happy / alert / scanning / speaking / listening / neutral), antenna pulse, HUD (SYS / AI / NET), status bar |
-| **Speech-to-text** | `arecord` capture → Google Speech API (temp-file pipeline, PyAudio-segfault-proof) |
-| **Text-to-speech** | gTTS online backend with espeak-ng offline fallback; markdown-stripping + sentence truncation |
-| **Neural TTS (assets ready)** | Piper ONNX voice models (`en_US-amy-low/medium`) + onnxruntime bundled for offline neural voice |
-| **Edge-TTS helper** | `edge_tts_helper.py` CLI for Microsoft neural voices |
-
-### Diagnostics & Tooling
-
-| File | Purpose |
-|---|---|
-| `diagnose_all.py` / `diagnose_motors.py` / `pin_diagnostic.py` | Per-pin GPIO multimeter-style tests |
-| `fix_motors.py` / `final_motor_fix.py` / `motor_alt_pins.py` | Motor wiring diagnostics & Pi-5 alternate pins |
-| `find_esp32.py` | ARP-table + ping scanner for the ESP32 |
-| `alsa_suppress.py` | Suppresses ALSA warnings |
-
----
-
-## Methodology
-
-- **Dual-model AI intent routing** — command → speech-to-text → keyword/regex intent classification → deterministic routing for hardware actions (motors, relays, scan) or LLM invocation for open-ended queries. Continuous IR-sensor safety overrides AI decisions.
-- **Fallback-chain resilience** — every critical path has a backup: Groq ↔ Gemini (text), Gemini Vision → Groq-with-camera-context (vision), gTTS → espeak-ng (TTS), Picamera2 → OpenCV (camera), MAC ARP → ping → IP sweep (ESP32 discovery).
-- **Zone-based proportional control** — RSSI thresholds (`CLOSE -55 / OPTIMAL -70 / FAR -85 dBm`) map to discrete velocity commands for smooth device following.
-- **Thread-based software PWM** — 1000 Hz GPIO toggle loop using the gpiod v2 API for Pi-5-grade motor speed control.
-- **State machines & enums** — `Direction`, `TrajectoryState`, `MotorDir` model locomotion states; modulo-12h schedule loops monitor alarms; per-second decrement loops run timers.
-- **System-prompt engineering** — all LLM calls use persona-aware prompts with output guardrails ("direct answer, 1–3 sentences max").
-- **Hardware-first iterative development** — successive motor-controller versions document a migration from GPIO 17/18/22/23/27/25 to Pi-5-safe pins 5/6/13/19/26/16, verified with dedicated diagnostic scripts.
-- **Modular singleton architecture** — each subsystem is an importable singleton wired by the central orchestrator, keeping the pipeline testable in isolation.
-
----
-
-## Applications
-
-- **Residential security / surveillance** — perimeter patrol, autonomous scanning, camera-assisted threat assessment, email alerts.
-- **Smart home automation** — voice control of lighting, fans, pump motors, and AC through ESP32 relays and contactors.
-- **Assistive technology** — hands-free navigation for elderly/disabled users: presence following, verbal queries, reminders.
-- **Telepresence & inspection** — remote viewing and indoor inspection via on-board camera and vision AI.
-- **Educational platform** — demonstrates embedded IoT, robotics, and LLM integration for engineering curricula.
-
----
-
-## Hardware Requirements
-
-| Component | Specification |
-|---|---|
-| **SBC** | Raspberry Pi 5 (8 GB RAM) |
-| **Motor driver** | L298N dual H-bridge |
-| **Motors** | 2× 12 V geared DC motors |
-| **Sensors** | 6-channel IR array (360°) |
-| **Relay module** | 8-channel opto-isolated |
-| **Contactors** | Schneider Electric TeSys D (AC loads) |
-| **Camera** | CP PLUS surveillance camera (CSI via Picamera2, or USB) |
-| **Microphone / Speaker** | USB mic + 3.5 mm speaker |
-| **Display** | 7″ HDMI touch panel (800×480) |
-| **IoT controller** | ESP32-WROOM-32 (5 or 8 relay web server) |
-| **Power** | 12 V / 2 A drivetrain, 5 V / 3 A logic |
-
-### Wiring (current Pi-5 GPIO map — `config.py`)
-
-```
-L298N IN1 → GPIO 5     IN2 → GPIO 6     IN3 → GPIO 13    IN4 → GPIO 19
-L298N ENA → GPIO 26    ENB → GPIO 16
-Cam / Mic / Speaker → USB         Display → HDMI
-ESP32 relays → Light1(D13) Fan(D12) Pump(D14) AC(D27) Light2(D26) + D25/D33/D32
-```
-
-> Legacy pins (17/18/22/23/27/25) are preserved in older `voice_rover*.py` variants for the original Raspberry Pi model.
-
----
-
-## Software Stack
-
-**Languages:** Python 3.13 · C++ (Arduino/ESP32) · Bash
-
-**Key Python libraries:**
-`groq` (Llama 3.3) · `google-genai` (Gemini text + vision) · `opencv-python` · `pygame` · `speechrecognition` · `gTTS` / `pyttsx3` · `requests` · `wikipedia` · `yt-dlp` · `edge-tts` · `piper-tts` + `onnxruntime` · `blynklib` · `RPi.GPIO` / `gpiod`
-
-**OS / Runtime:** Raspberry Pi OS (Linux), ALSA audio, BlueZ (`bluetoothctl`, `hcitool`), VLC (`cvlc`).
-
----
-
-## Repository Structure
-
-```
-goku_4/
-├── main.py                    # Entry point / graceful shutdown
-├── rover_controller.py        # Central orchestrator & command loop
-├── ai_router.py               # Dual-model AI router + intent detection
-├── groq_assistant.py          # Groq (Llama) text assistant
-├── gemini_assistant.py        # Google Gemini text assistant
-├── gemini_vision.py           # Gemini vision (image analysis)
-├── web_search.py              # Live web search (DDG / Wiki / Brave)
-├── weather_module.py          # wttr.in weather
-├── media_control.py           # YouTube music (yt-dlp + VLC)
-├── speech_handler.py          # STT (arecord + Google Speech)
-├── tts_engine.py              # TTS (gTTS, espeak-ng fallback)
-├── edge_tts_helper.py         # Edge-TTS CLI helper
-├── display_controller.py      # Animated Pygame robot-face HMI
-├── camera_stream.py           # Picamera2 / OpenCV camera
-├── motor_control.py           # L298N driver (gpiod, SW PWM)
-├── navigation.py              # Trajectory planning / obstacle states
-├── bluetooth_follower.py      # RSSI-based device following
-├── keypad_controller.py       # WASD keypad thread
-├── home_automation.py         # ESP32 relay control over HTTP
-├── email_notifier.py          # Gmail SMTP alerts
-├── alarm_system.py            # Alarm scheduling + ringtone
-├── timer_system.py            # Timers (pause/resume)
-├── ringtone_manager.py        # WAV ringtone generation
-├── goku_utils.py              # Shared utilities
-├── alsa_suppress.py           # ALSA warning suppressor
-├── config.py                  # Primary configuration
-├── config_new.py              # Expanded/Blynk config
-├── requirements.txt           # Python dependencies
-├── run.sh / run_goku.sh       # Raspberry Pi launch scripts
-├── esp32_8channel.ino         # 8-relay ESP32 firmware
-├── esp32_home_auto/           # 5-relay ESP32 firmware + docs
-├── piper_models/              # Piper neural TTS voices (.onnx)
-├── ringtones/                 # Generated alarm/timer WAVs
-├── voice_rover*.py            # Standalone voice rover variants
-├── diagnose_*.py / *_diagnostic.py / fix_motors.py  # Hardware tools
-└── find_esp32.py              # ESP32 network scanner
+      ┌───────────────────┐
+      │   ◉           ◉   │     LED eyes: glow · blink · scan
+      │                   │
+      │      ▁▂▃▂▁        │     waveform while speaking
+      └───────────────────┘
 ```
 
 ---
 
-## Setup & Installation
+## 🎬 Demo
 
-### 1. Raspberry Pi prerequisites
+> Demo video and photos are on the way. ⭐ Star the repo to catch the drop.
+
+<!--
+Add your media here, then delete this comment:
+
+![GOKU demo](docs/demo.gif)
+
+| The rover | The face HUD | The relay board |
+|---|---|---|
+| ![rover](docs/rover.jpg) | ![hud](docs/hud.png) | ![relays](docs/relays.jpg) |
+-->
+
+---
+
+## 🧰 Systems Online
+
+| System | What it does | Where it lives |
+|---|---|---|
+| 🧠 **Cortex** | Detects intent, then routes to time, weather, music, vision, search, or chat. Groq and Gemini back each other up. | `ai_router.py` `groq_assistant.py` `gemini_assistant.py` |
+| 🎤 **Ears & Voice** | Records with ALSA `arecord`, transcribes with Google STT, and replies with gTTS (espeak-ng offline fallback). | `speech_handler.py` `tts_engine.py` |
+| 🚗 **Locomotion** | L298N dual-motor driver using software PWM through `libgpiod`. | `motor_control.py` |
+| 📡 **Shadow Mode** | Follows a paired Bluetooth device by RSSI zones (too close, optimal, too far). | `bluetooth_follower.py` |
+| 👁️ **Vision** | Picamera2 (CSI) with an OpenCV fallback, plus Gemini Vision scene descriptions. | `camera_stream.py` `gemini_vision.py` |
+| 🏠 **Home Control** | Finds the ESP32 on the LAN by MAC address and drives relays over HTTP. | `home_automation.py` `esp32_8channel.ino` |
+| 🎵 **Media** | YouTube search via `yt-dlp`, playback and control through VLC. | `media_control.py` |
+| ⏰ **Clocks** | Voice-set alarms and pausable timers with generated WAV tones. | `alarm_system.py` `timer_system.py` `ringtone_manager.py` |
+| 🚨 **Alerts** | Gmail SMTP security notifications. | `email_notifier.py` |
+| 🎭 **Face** | Animated robot HUD at 800×480. | `display_controller.py` |
+| ⌨️ **Manual override** | WASD driving from the terminal, alongside voice. | `keypad_controller.py` |
+
+---
+
+## 🧬 Architecture
+
+```mermaid
+flowchart LR
+    MIC["🎤 USB mic<br/>ALSA · arecord"] --> STT["Google STT"]
+    STT --> CORE{{"🧠 rover_controller.py<br/>the conductor"}}
+    KEYS["⌨️ WASD keypad"] --> CORE
+
+    CORE --> ROUTER["ai_router.py<br/>intent → best tool"]
+    ROUTER --> GROQ["Groq<br/>Llama 3.3 70B"]
+    ROUTER --> GEM["Gemini Flash"]
+    ROUTER --> VIS["Gemini Vision<br/>camera frame"]
+    ROUTER --> WEB["Web search<br/>Weather"]
+
+    CORE --> MOT["motor_control.py<br/>L298N · gpiod PWM"]
+    CORE --> BT["bluetooth_follower.py<br/>RSSI"]
+    CORE --> HOME["home_automation.py"] --> ESP["ESP32<br/>relay board"]
+    CORE --> MED["media_control.py<br/>yt-dlp + VLC"]
+    CORE --> TTS["tts_engine.py<br/>gTTS → espeak-ng"]
+    CORE --> FACE["display_controller.py<br/>pygame face"]
+```
+
+### The life of one voice command
+
+```mermaid
+sequenceDiagram
+    actor You
+    participant Ears as Mic + STT
+    participant Core as rover_controller
+    participant Router as ai_router
+    participant LLM as Groq / Gemini
+    participant Out as Speaker + Face
+
+    You->>Ears: "What's the weather in Tokyo?"
+    Ears->>Core: 5 s of 16 kHz audio → text
+    Core->>Router: text
+    Router->>Router: intent check (time, weather, music, vision, chat)
+    Router->>LLM: query + context, with fallback if one brain is down
+    LLM-->>Router: answer
+    Router-->>Core: spoken-length reply
+    Core->>Out: speak it, animate the face
+```
+
+---
+
+## 🎤 Voice Commands
+
+Just talk naturally. A few things it understands:
+
+| Category | Try saying |
+|---|---|
+| 🚗 **Move** | *forward · backward · left · right · stop · reverse · forward 5 seconds* |
+| 🔭 **Scan** | *scan · investigate · look around* |
+| 📡 **Follow** | *follow me · stop following · save my device* + the Bluetooth MAC |
+| 💡 **Home** | *lights on/off · fan on/off · pump on/off · AC on/off · all off* |
+| 👁️ **Vision** | *what do you see? · describe the room · read the text · how many fingers?* |
+| 🌤️ **Info** | *weather in [city] · what time is it? · search for [topic] · who is [person]?* |
+| 🎵 **Media** | *play [song] · pause · resume · stop* |
+| ⏰ **Clocks** | *set alarm for 07:00 · set timer for 5 minutes · list alarms* |
+
+### 🎮 Keyboard mode
+
+Runs alongside voice, straight from the terminal:
+
+| Key | Action | Key | Action |
+|---|---|---|---|
+| `W` | Forward | `Space` | Stop |
+| `S` | Backward | `Q` | Exit keypad mode |
+| `A` | Left | `Ctrl+C` | Shut everything down |
+| `D` | Right | | |
+
+---
+
+## 🔩 Hardware
+
+| Part | Role |
+|---|---|
+| **Raspberry Pi 5** | The brain, running Raspberry Pi OS (64-bit) |
+| **L298N motor driver** + 2 DC motors | Locomotion (12 V drivetrain) |
+| **Pi Camera (CSI)** or USB camera | Vision |
+| **800×480 HDMI display** | The robot face |
+| **USB microphone** + speaker | Ears and voice |
+| **ESP32 dev board** + relay module | Lights, fan, pump, AC |
+
+<details>
+<summary><b>📍 Raspberry Pi GPIO map (BCM numbering)</b></summary>
+
+<br/>
+
+| GPIO | Signal | Connected to |
+|---|---|---|
+| `5` | IN1 | Motor A + |
+| `6` | IN2 | Motor A − |
+| `13` | IN3 | Motor B + |
+| `19` | IN4 | Motor B − |
+| `26` | ENA (PWM) | Motor A speed |
+| `16` | ENB (PWM) | Motor B speed |
+
+</details>
+
+<details>
+<summary><b>🔌 ESP32 relay map</b></summary>
+
+<br/>
+
+| Relay | ESP32 pin | Device |
+|---|---|---|
+| 1 | `D13` | 💡 Light 1 |
+| 2 | `D12` | 🌬️ Fan |
+| 3 | `D14` | 🚰 Pump motor |
+| 4 | `D27` | ❄️ AC |
+| 5 | `D26` | 💡 Light 2 |
+
+An 8-channel firmware (`esp32_8channel.ino`) and a 5-relay variant (`esp32_home_auto/`) are included.
+
+</details>
+
+**Power:** 12 V @ 2 A for the drivetrain, 5 V @ 3 A for the Pi, 5 V USB for the ESP32.
+
+> [!WARNING]
+> The relays switch real appliances. Use an opto-isolated relay module, keep mains wiring enclosed and insulated, and never work on it while it's plugged in.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Clone and install
 
 ```bash
-sudo apt update && sudo apt install -y \
-  python3 python3-venv python3-rpi.gpio \
-  bluez bluetooth bluez-tools \
-  alsa-utils pulseaudio \
-  vlc \
-  git
+git clone https://github.com/saivikrambalaji2004/goku_4.git
+cd goku_4
 
-# Camera
-sudo raspi-config   # → Interface → enable Camera / CSI
+# System packages (Raspberry Pi OS)
+sudo apt install -y python3-gpiod python3-picamera2 espeak-ng vlc alsa-utils bluez pulseaudio-utils
 
-# Stereo/audio: verify recording device before running
-arecord -l
-```
-
-### 2. Install Python dependencies
-
-```bash
+# Python environment (system-site-packages lets the venv see gpiod and picamera2)
+python3 -m venv venv --system-site-packages
+source venv/bin/activate
 pip install -r requirements.txt
+pip install gTTS edge-tts Pillow numpy yt-dlp
 ```
 
-### 3. Set environment variables
-
-| Variable | Purpose |
-|---|---|
-| `GROQ_API_KEY` | Llama 3.3 text intelligence |
-| `GOOGLE_API_KEY` | Gemini text intelligence |
-| `GOOGLE_VISION_API_KEY` | Gemini vision analysis |
-| `BLYNK_AUTH` | Optional Blynk IoT cloud token |
-| `EMAIL_SENDER` / `EMAIL_PASSWORD` / `EMAIL_RECIPIENT` | Gmail SMTP alerts (use an App Password) |
-| `ESP32_IP` | Static ESP32 address (or let discovery find it) |
+### 2. Add your keys (never commit these)
 
 ```bash
-export GROQ_API_KEY="your_groq_key"
-export GOOGLE_API_KEY="your_google_key"
-export GOOGLE_VISION_API_KEY="your_vision_key"
+export GROQ_API_KEY="your-groq-key"
+export GOOGLE_API_KEY="your-gemini-key"
+export GOOGLE_VISION_API_KEY="your-gemini-key"   # can be the same key
 export EMAIL_SENDER="you@gmail.com"
-export EMAIL_PASSWORD="your_app_password"
-export EMAIL_RECIPIENT="alerts@gmail.com"
+export EMAIL_PASSWORD="your-gmail-app-password"
+export EMAIL_RECIPIENT="alerts@example.com"
 export ESP32_IP="192.168.1.100"
 ```
 
-> See [Security Notes](#security-notes) — do **not** commit real keys into `config.py`.
+Two more things to check:
+
+- Set your ESP32's MAC address in `config.py` so GOKU can find it even when DHCP changes its IP.
+- Find your USB mic with `arecord -l` and update the ALSA device in `speech_handler.py` (default `plughw:2,0`).
+
+### 3. Flash the ESP32
+
+Open `esp32_8channel.ino` in the Arduino IDE, choose **ESP32 Dev Module**, add your Wi-Fi credentials, and upload over USB. Wire the relays, then power-cycle the board.
+
+### 4. Wake GOKU up
+
+```bash
+sudo ./venv/bin/python3 main.py
+```
+
+`sudo` is there for direct GPIO access. Wait for the robot face to say *"Goku online. All systems ready."* and start talking.
 
 ---
 
-## Running GOKU
+## 🩺 Diagnostics
+
+Hardware acting up? These scripts test each piece on its own:
 
 ```bash
-# From project directory (requires sudo for GPIO)
-sudo python3 main.py
+sudo python3 diagnose_all.py      # every GPIO pin, original vs. alternate sets
+sudo python3 diagnose_motors.py   # motor pins and a forward pattern
+sudo python3 pin_diagnostic.py    # per-pin HIGH/LOW check with a multimeter
+python3 find_esp32.py             # scan the LAN for the ESP32
 ```
-
-```bash
-# Via the provided launch scripts (venv-aware, sets PYTHONPATH)
-./run.sh          # or
-./run_goku.sh
-```
-
-```bash
-# Standalone voice rover with Bluetooth following (original pins)
-sudo python3 voice_rover.py
-
-# Standalone variants using alternate Pi-5 pins
-sudo python3 voice_rover_fixed.py
-sudo python3 voice_rover_final.py
-```
-
-Graceful shutdown: keypad `Q` or `Ctrl+C` (SIGINT handlers run a full system teardown).
 
 ---
 
-## ESP32 Firmware
+## 🛠️ Engineering Notes: what broke, and how it got fixed
 
-1. Open `esp32_8channel.ino` (8 relays) or `esp32_home_auto/esp32_home_auto.ino` (5 relays).
-2. Set your WiFi `ssid` / `password`.
-3. Flash via Arduino IDE or PlatformIO.
-4. Note the printed **IP and MAC** in Serial Monitor.
-5. Update `ESP32_IP` / `ESP32_MAC` in `config.py`, or let discovery auto-find it.
-
-**ESP32 HTTP API:**
-
-| Endpoint | Description |
+| Problem | What I did |
 |---|---|
-| `GET /` | HTML relay control panel |
-| `GET /relay?r=<0-7>&s=<0\|1>` | Toggle a relay on/off |
-| `GET /allon` · `GET /alloff` | All relays on/off (5-channel) |
-| `GET /status` | JSON relay states: `{"relay1":0,…}` |
+| **Pi 5 GPIO refused to behave.** The original motor pins misbehaved. | Wrote diagnostic scripts, tested both pin sets, and moved to GPIO 5, 6, 13, 19, 26, 16. PWM must start *before* direction is set, and both enable pins must be live. |
+| **PyAudio kept segfaulting.** | Dropped it. Audio is recorded with ALSA's `arecord` CLI and fed to the recognizer as a WAV file. |
+| **ALSA spammed the console.** | Installed a no-op error handler through `ctypes` before pygame loads. |
+| **The ESP32 changes IP on every DHCP lease.** | `home_automation.py` finds it by MAC through the ARP table, then falls back to sweeping likely IPs. |
+| **LLM quotas and outages.** | Dual-model routing with fallback, plus retry-with-backoff on Gemini quota errors. |
+| **No internet means no voice.** | gTTS for natural speech, with espeak-ng as an offline fallback. |
+
+<details>
+<summary><b>📂 Project map</b></summary>
+
+```
+goku_4/
+├── main.py                  # entry point: signal handlers → rover_controller
+├── rover_controller.py      # the conductor: init, command loop, shutdown
+├── config.py                # pins, models, timings
+│
+├── ai_router.py             # intent detection → time / weather / music / vision / chat
+├── groq_assistant.py        # Llama 3.3 70B via Groq
+├── gemini_assistant.py      # Gemini text
+├── gemini_vision.py         # Gemini vision with quota retry
+├── web_search.py            # DuckDuckGo lookups
+│
+├── speech_handler.py        # arecord → Google STT
+├── tts_engine.py            # gTTS → espeak-ng
+├── edge_tts_helper.py       # Edge TTS voice helper
+│
+├── motor_control.py         # L298N driver, libgpiod software PWM
+├── bluetooth_follower.py    # RSSI-based "follow me"
+├── navigation.py            # trajectory planning (obstacle detection is WIP)
+├── keypad_controller.py     # WASD manual override
+│
+├── home_automation.py       # ESP32 discovery + HTTP relay control
+├── esp32_8channel.ino       # 8-relay firmware
+├── esp32_home_auto/         # 5-relay variant
+│
+├── camera_stream.py         # Picamera2 → OpenCV fallback
+├── display_controller.py    # pygame robot-face HUD
+├── media_control.py         # yt-dlp + VLC
+├── weather_module.py        # wttr.in
+├── alarm_system.py          # threaded alarm clock
+├── timer_system.py          # pausable countdown timers
+├── ringtone_manager.py      # generates alarm/timer WAVs
+├── email_notifier.py        # Gmail SMTP alerts
+├── goku_utils.py            # logging, retry, buffers
+├── alsa_suppress.py         # silence ALSA warnings
+│
+├── piper_models/            # local ONNX TTS voices (experimental)
+├── ringtones/               # generated WAV tones
+├── requirements.txt
+├── run.sh · run_goku.sh     # launch scripts
+│
+└── 🦴 the fossil record (early prototypes and hardware debugging)
+    ├── voice_rover.py · voice_rover_fixed.py · voice_rover_final.py
+    ├── motor_alt_pins.py · config_new.py
+    ├── fix_motors.py · final_motor_fix.py
+    └── diagnose_all.py · diagnose_motors.py · pin_diagnostic.py · find_esp32.py
+```
+
+</details>
 
 ---
 
-## Voice Commands
+## 🧭 Roadmap
 
-### Movement
-"forward", "backward", "left", "right", "stop", "forward for 5 seconds"
-
-### Surveillance
-"scan the perimeter", "investigate", "sweep", "look around"
-
-### Modes
-"autonomous mode" / "manual mode" · "start autonomous navigation" / "auto navigate"
-
-### Follow & Bluetooth
-"follow me", "stop follow", "follow device AA:BB:CC:DD:EE:FF", "save my device AA:BB:…"
-
-### Home Automation
-"lights on / off", "light 2 on", "fan on/off", "pump on/off", "motor on/off" "AC on/off", "air condition on/off", "all off", "everything off"
-
-### Music
-"play [song] by [artist]", "play some [language] music", "pause", "resume", "stop music"
-
-### Alarms & Timers
-"set alarm for 7:30 called wake up", "list alarms", "delete alarm wake up"
-"set timer for five minutes", "pause/stop/resume timer", "list timers", "remind me in half hour"
-
-### AI Queries
-- **Vision:** "what do you see?", "search for a red bottle", "how many people are here?", "count the chairs", "what colour is the cup?", "read the text", "describe the room", "where am I?"
-- **Weather:** "weather in Chennai", "is it raining?" 
-- **Web:** "who is …?", "search for latest news"
-- **Time:** "what time is it?", "what's today's date?"
-- **Navigation:** "which way should I go?", "is it safe to move forward?"
+- [x] Voice pipeline with dual-LLM routing and fallback
+- [x] Bluetooth RSSI following
+- [x] ESP32 relay control with MAC-based discovery
+- [x] Animated robot-face HUD
+- [ ] Sensor-driven obstacle avoidance (the hooks in `navigation.py` are stubs waiting for sensors)
+- [ ] Vision-based person following, to replace the Bluetooth RSSI approach
+- [ ] Wake word and offline speech recognition
+- [ ] Web dashboard with a live camera feed
+- [ ] Secrets in a `.env` file, plus unit tests and CI
+- [ ] Move early prototypes into a `prototypes/` folder
 
 ---
 
-## Keypad Control
+## 🔐 Security & Privacy
 
-While GOKU is running (voice + keypad simultaneously):
-
-| Key | Action |
-|---|---|
-| `W` | Forward |
-| `A` | Left |
-| `S` | Backward |
-| `D` | Right |
-| `Space` | Stop |
-| `Q` | Exit keypad mode |
+- API keys, the Gmail app password, and other credentials belong in **environment variables or a git-ignored `.env`**, never in the repo.
+- ESP32 relays are controlled over the **local network only**.
+- Bluetooth following reads **signal strength only**. No data leaves the device.
+- GOKU has a camera and a microphone. Run it only in spaces you own or where everyone has agreed to it.
 
 ---
 
-## Configuration
+## 👤 Built by
 
-Most tuning lives in `config.py`:
+**Sai**: Electronics & Communication Engineering student, working on embedded systems, IoT, and software.
+GitHub: [@saivikrambalaji2004](https://github.com/saivikrambalaji2004)
 
-- `MOTOR_PINS` (IN1/IN2/IN3/IN4/ENA/ENB), `CAMERA_INDEX`
-- `MOTOR_SPEED` / `TURN_SPEED` / `SCAN_SPEED`
-- `HOME_AUTOMATION` device → relay mapping
-- `AI_ROUTING` (model list, default model, fallback toggle)
-- `BLUETOOTH_FOLLOW.target_mac` (auto-persisted by the follower)
-- `SPEECH_LANGUAGE`, `TTS_RATE/VOLUME`
-- Alert subject/body, display size/FPS
+Found a bug or have an idea? Open an issue or a pull request.
 
-Hard-coded absolute paths (`/home/sai/Desktop/goku_4`) appear in `run.sh`, `run_goku.sh`, `main.py`, and `media_control.py` — update them for your machine.
+## 📜 License
 
----
+Released under the **MIT License**. See [`LICENSE`](LICENSE).
 
-## Security Notes
+<div align="center">
 
-- `config.py` currently ships **fallback hard-coded credentials**. **Rotate all API keys, the Blynk token, and the Gmail App Password before publishing**, and move them to environment variables / a `.gitignore`d `.env`.
-- Gmail access requires an **App Password** (enable 2-Step Verification first).
-- GPIO control requires `sudo`; keep the Pi on a trusted local network.
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:2c5364,50:203a43,100:0f2027&height=120&section=footer" alt="footer" />
 
----
+*Built with soldering fumes, too much coffee, and a healthy disrespect for* `sudo`.
 
-## Limitations & Future Work
-
-- **Offline neural TTS** (Piper models) and **Blynk cloud** are provisioned but not yet wired into the main loop — natural next steps.
-- Obstacle sensors currently return safe defaults; the physical IR array provides the live safety layer.
-- No automated test suite yet — hardware diagnostics scripts serve as manual tests (see report §6.2).
-- Future: SLAM-based mapping, multi-ESP32 zones, mobile app dashboard, OTA firmware updates.
-
----
+</div>
